@@ -210,7 +210,29 @@
       e.stopPropagation();
       close();
     }, true);
+        // Links inside the pop-up that jump to another part of the page (Surge's
+    // jump links, or #anchors): close the pop-up first, so the page can scroll
+    // to that section. Links that open another site are left alone.
+    document.addEventListener('click', function (e) {
+      if (!isOpen || !box) return;
+      var link = e.target.closest && e.target.closest('a[href]');
+      if (!link || !box.contains(link)) return;
+      if (isInPageLink(link)) close();
+    }, true);
     window.addEventListener('resize', place);
+  }
+
+  function isInPageLink(link) {
+    var href = link.getAttribute('href') || '';
+    if (href.charAt(0) === '#') return true;
+    if (href.indexOf('jumpTo=') !== -1) return true;
+    if (link.target === '_blank') return false;
+    try {
+      var url = new URL(href, window.location.href);
+      return url.origin === window.location.origin && url.pathname === window.location.pathname;
+    } catch (err) {
+      return false;
+    }
   }
 
   function findHelperBox() {
